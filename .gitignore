@@ -1,0 +1,5 @@
+bin/
+obj/
+Installers/*.msi
+build-verify/
+.vs/
