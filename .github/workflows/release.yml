@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Semantic version bump for the release
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      runtime:
+        description: Windows release target(s)
+        required: true
+        default: both
+        type: choice
+        options:
+          - both
+          - win-x64
+          - win-x86
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Create GitHub release
+        uses: hsayed21/release-action@v1
+        with:
+          version: ${{ inputs.version }}
+          initial-version: '0.0.0'
+          generate-changelog: true
+          release-command-shell: pwsh
+          release-command: |
+            if ('${{ inputs.runtime }}' -eq 'both') {
+              ./scripts/New-ReleaseZip.ps1 -Version $env:RELEASE_VERSION -Runtime win-x64
+              ./scripts/New-ReleaseZip.ps1 -Version $env:RELEASE_VERSION -Runtime win-x86
+            }
+            else {
+              ./scripts/New-ReleaseZip.ps1 -Version $env:RELEASE_VERSION -Runtime "${{ inputs.runtime }}"
+            }
+          files-pattern: artifacts/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
