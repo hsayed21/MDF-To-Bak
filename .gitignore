@@ -1,5 +1,7 @@
 bin/
 obj/
+artifacts/
+build-verify/
 Installers/*.msi
 build-verify/
 .vs/
